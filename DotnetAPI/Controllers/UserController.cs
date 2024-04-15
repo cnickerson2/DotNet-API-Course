@@ -1,4 +1,5 @@
 ﻿using DotnetAPI.Data;
+using DotnetAPI.DTOs;
 using DotnetAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -71,7 +72,7 @@ namespace DotnetAPI.Controllers
         }
 
         [HttpPost("AddUser")]
-        public IActionResult AddUser(User user)
+        public IActionResult AddUser(UserToAddDTO user)
         {
             string sql = @" INSERT INTO TutorialAppSchema.Users ([FirstName], [LastName], [Email], [Gender], [Active])
                             VALUES ('"+ user.FirstName + "','" + user.LastName + "','" + user.Email + "','" + user.Gender + "','" + user.Active + "')";
