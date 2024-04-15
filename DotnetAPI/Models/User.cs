@@ -1,7 +1,7 @@
 ﻿namespace DotnetAPI.Models
 {
  
-    public partial class Users
+    public partial class User
     {
         public int UserId { get; set; }
         public string FirstName { get; set; } = string.Empty;
