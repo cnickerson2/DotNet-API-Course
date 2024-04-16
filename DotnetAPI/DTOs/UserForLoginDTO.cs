@@ -1,8 +1,8 @@
 ﻿namespace DotnetAPI.DTOs
 {
-    partial class UserForLoginDTO
+    public partial class UserForLoginDTO
     {
-        string Email { get; set; } = "";
-        string Password { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Password { get; set; } = "";
     }
 }
