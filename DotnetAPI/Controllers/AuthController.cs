@@ -67,6 +67,22 @@ namespace DotnetAPI.Controllers
         [HttpPost("Login")]
         public IActionResult Login(UserForLoginDTO userForLogin)
         {
+            string sqlForHashAndSalt = @"SELECT [PasswordHash],
+                                                [PasswordSalt]
+                                         FROM TutorialAppSchema.Auth WHERE Email = '" + userForLogin.Email + "'";
+            UserForLoginConfirmationDTO userForLoginConfirmation = _dapper.LoadDataSingle<UserForLoginConfirmationDTO>(sqlForHashAndSalt);
+
+            byte[] passwordHash = GetPasswordHash(userForLogin.Password, userForLoginConfirmation.PasswordSalt);
+
+            // if(passwordHash == userForLoginConfirmation.PasswordHash) // Won't work
+            for(int index = 0; index < passwordHash.Length; index++)
+            {
+                if (passwordHash[index] != userForLoginConfirmation.PasswordHash[index])
+                {
+                    return StatusCode(401, "Incorrect Password!");
+                }
+            }
+
             return Ok();
         }
 
