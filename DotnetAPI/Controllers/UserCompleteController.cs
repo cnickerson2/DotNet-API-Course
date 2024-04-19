@@ -38,7 +38,10 @@ namespace DotnetAPI.Controllers
                 parameters += ", @Active=" + (isActive ? 1 : 0).ToString();
             }
 
-            sql += parameters.Substring(1);
+            if (parameters.Length > 0)
+            {
+                sql += parameters.Substring(1);
+            }
             IEnumerable<UserComplete> users = _dapper.LoadData<UserComplete>(sql);
             return users;
         }
