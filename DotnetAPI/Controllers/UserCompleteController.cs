@@ -6,9 +6,11 @@ using System.Reflection;
 using System;
 using Dapper;
 using DotnetAPI.Helpers;
+using Microsoft.AspNetCore.Authorization;
 
 namespace DotnetAPI.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("[controller]")]
     public class UserCompleteController : ControllerBase
