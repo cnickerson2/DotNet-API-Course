@@ -1,4 +1,5 @@
-﻿using Dapper;
+﻿using AutoMapper;
+using Dapper;
 using DotnetAPI.Data;
 using DotnetAPI.DTOs;
 using DotnetAPI.Helpers;
@@ -22,10 +23,17 @@ namespace DotnetAPI.Controllers
     {
         private readonly DataContextDapper _dapper;
         private readonly AuthHelper _authHelper;
+        private readonly ReusableSQL _reusableSQL;
+        private readonly IMapper _mapper;
         public AuthController(IConfiguration config) 
         { 
             _dapper = new DataContextDapper(config);
             _authHelper = new AuthHelper(config);
+            _reusableSQL = new ReusableSQL(config);
+            _mapper = new Mapper(new MapperConfiguration(cfg =>
+            {
+                cfg.CreateMap<UserForRegistrationDTO, UserComplete>();
+            }));
         }
 
         [AllowAnonymous]
@@ -47,17 +55,10 @@ namespace DotnetAPI.Controllers
 
                     if (_authHelper.SetPassword(userForSetPassword))
                     {
+                        UserComplete userComplete = _mapper.Map<UserComplete>(userForRegistration);
+                        userComplete.Active = true;
 
-                        string sqlAddUser = "EXEC TutorialAppSchema.spUser_Upsert " +
-                                      "@FirstName = '" + userForRegistration.FirstName +
-                                      "', @LastName = '" + userForRegistration.LastName +
-                                      "', @Email = '" + userForRegistration.Email +
-                                      "', @Gender = '" + userForRegistration.Gender +
-                                      "', @Active = 1" +
-                                      ", @JobTitle = '" + userForRegistration.JobTitle +
-                                      "', @Department = '" + userForRegistration.Department +
-                                      "', @Salary = " + userForRegistration.Salary;
-                        if (_dapper.ExecuteSql(sqlAddUser))
+                        if (_reusableSQL.UpsertUser(userComplete))
                         {
                             return Ok();
 
