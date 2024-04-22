@@ -52,43 +52,25 @@ namespace DotnetAPI.Controllers
             return _dapper.LoadData<Post>(sql);
         }
 
-        [HttpPost("Post")]
-        public IActionResult AddPost(PostToAddDTO postToAdd)
+        [HttpPut("UpsertPost")]
+        public IActionResult UpsertPost(Post postToUpsert)
         {
-            string sql = @"INSERT INTO TutorialAppSchema.Posts(
-                              [UserId],
-                              [PostTitle],
-                              [PostContent],
-                              [PostCreated],
-                              [PostUpdated]) VALUES
-                              (" + this.User.FindFirst("userId")?.Value + ",'"
-                              + postToAdd.PostTitle + "','"
-                              + postToAdd.PostContent + "',"
-                              + "GETDATE(), "
-                              + "GETDATE())";
+            string sql = @"EXEC TutorialAppSchema.spPosts_Upsert
+                                    @UserId = " + this.User.FindFirst("userId")?.Value +
+                              ",    @PostTitle = '" + postToUpsert.PostTitle +
+                              "',   @PostContent = '" + postToUpsert.PostContent +
+                              "'";
+            if (postToUpsert.PostId > 0) 
+            {
+                sql += ", @PostId = " + postToUpsert.PostId;
+            }                            
+
             if (_dapper.ExecuteSql(sql))
             {
                 return Ok();
             }
 
-            throw new Exception("Failed to create new post");
-        }
-
-        [HttpPut("Post")]
-        public IActionResult EditPost(PostToEditDTO postToEdit)
-        {
-            string sql = @" UPDATE TutorialAppSchema.Posts SET
-                                      [PostTitle] = '" + postToEdit.PostTitle + @"',
-                                      [PostContent] = '" + postToEdit.PostContent + @"',
-                                      [PostUpdated] = GETDATE()
-                            WHERE     PostId = " + postToEdit.PostId.ToString() + @"
-                                  AND UserId = " + this.User.FindFirst("userId")?.Value;
-            if (_dapper.ExecuteSql(sql))
-            {
-                return Ok();
-            }
-
-            throw new Exception("Failed to update post");
+            throw new Exception("Failed to upsert post");
         }
 
         [HttpDelete("Post/{postId}")]
