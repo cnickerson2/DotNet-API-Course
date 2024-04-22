@@ -1,6 +1,7 @@
 ﻿using DotnetAPI.Data;
 using DotnetAPI.DTOs;
 using DotnetAPI.Helpers;
+using DotnetAPI.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Mvc;
@@ -45,26 +46,39 @@ namespace DotnetAPI.Controllers
 
                     byte[] passwordHash = _authHelper.GetPasswordHash(userForRegistration.Password, passwordSalt);
 
-                    string sqlAddAuth = @"  INSERT INTO TutorialAppSchema.Auth ([Email], [PasswordHash], [PasswordSalt])
-                                            VALUES ('" + userForRegistration.Email + "', @PasswordHash, @PasswordSalt)";
+                    string sqlAddAuth = "EXEC TutorialAppSchema.spRegistration_Upsert " +
+                        "@Email = @EmailParam" +
+                        ", @PasswordHash = @PasswordHashParam" +
+                        ", @PasswordSalt = @PasswordSaltParam";
 
                     List<SqlParameter> sqlParameters = new List<SqlParameter>();
 
-                    SqlParameter passwordSaltParameter = new SqlParameter("@PasswordSalt", System.Data.SqlDbType.VarBinary);
-                    passwordSaltParameter.Value = passwordSalt;
+                    SqlParameter emailParameter = new SqlParameter("@EmailParam", System.Data.SqlDbType.VarChar);
+                    emailParameter.Value = userForRegistration.Email;
 
-                    SqlParameter passwordHashParameter = new SqlParameter("@PasswordHash", System.Data.SqlDbType.VarBinary);
+                    SqlParameter passwordHashParameter = new SqlParameter("@PasswordHashParam", System.Data.SqlDbType.VarBinary);
                     passwordHashParameter.Value = passwordHash;
 
-                    sqlParameters.Add(passwordSaltParameter);
+                    SqlParameter passwordSaltParameter = new SqlParameter("@PasswordSaltParam", System.Data.SqlDbType.VarBinary);
+                    passwordSaltParameter.Value = passwordSalt;
+
+                    sqlParameters.Add(emailParameter);
                     sqlParameters.Add(passwordHashParameter);
+                    sqlParameters.Add(passwordSaltParameter);
 
                     if(_dapper.ExecuteSqlWithParameters(sqlAddAuth, sqlParameters))
                     {
 
-                        string sqlAddUser = @" INSERT INTO TutorialAppSchema.Users ([FirstName], [LastName], [Email], [Gender], [Active])
-                            VALUES ('" + userForRegistration.FirstName + "','" + userForRegistration.LastName + "','" + userForRegistration.Email + "','" + userForRegistration.Gender + "','true')";
-                        if(_dapper.ExecuteSql(sqlAddUser))
+                        string sqlAddUser = "EXEC TutorialAppSchema.spUser_Upsert " +
+                                      "@FirstName = '" + userForRegistration.FirstName +
+                                      "', @LastName = '" + userForRegistration.LastName +
+                                      "', @Email = '" + userForRegistration.Email +
+                                      "', @Gender = '" + userForRegistration.Gender +
+                                      "', @Active = 1" +
+                                      ", @JobTitle = '" + userForRegistration.JobTitle +
+                                      "', @Department = '" + userForRegistration.Department +
+                                      "', @Salary = " + userForRegistration.Salary;
+                        if (_dapper.ExecuteSql(sqlAddUser))
                         {
                             return Ok();
 
